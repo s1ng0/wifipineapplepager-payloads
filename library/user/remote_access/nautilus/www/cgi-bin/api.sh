@@ -493,7 +493,22 @@ STOP_SPINNER() {
     echo "[SPINNER:stop:$id]" >&2
 }
 
-export -f LOG ALERT ERROR_DIALOG LED CONFIRMATION_DIALOG PROMPT TEXT_PICKER NUMBER_PICKER IP_PICKER MAC_PICKER SPINNER SPINNER_STOP START_SPINNER STOP_SPINNER _nautilus_emit _wait_response
+WAIT_FOR_INPUT() {
+    echo "[BUTTON_WAIT:ANY]" >&2
+    sleep 0.1
+    local btn=$(_wait_response "A")
+    echo -n "$btn"
+}
+
+WAIT_FOR_BUTTON_PRESS() {
+    local expected="$*"
+    echo "[BUTTON_WAIT:$expected]" >&2
+    sleep 0.1
+    local btn=$(_wait_response "${1:-A}")
+    echo -n "$btn"
+}
+
+export -f LOG ALERT ERROR_DIALOG LED CONFIRMATION_DIALOG PROMPT TEXT_PICKER NUMBER_PICKER IP_PICKER MAC_PICKER SPINNER SPINNER_STOP START_SPINNER STOP_SPINNER WAIT_FOR_INPUT WAIT_FOR_BUTTON_PRESS _nautilus_emit _wait_response
 
 cd "$(dirname "$1")"
 source "$1"
@@ -550,6 +565,11 @@ WRAPPER_EOF
                         spinner_id=""
                     fi
                     printf 'event: spinner\ndata: {"action":"stop","id":"%s"}\n\n' "$spinner_id"
+                    continue ;;
+                "[BUTTON_WAIT:"*)
+                    inner="${line#\[BUTTON_WAIT:}"
+                    expected="${inner%%\]*}"
+                    printf 'event: button_wait\ndata: {"expected":"%s"}\n\n' "$expected"
                     continue ;;
             esac
             color=""
@@ -1709,8 +1729,24 @@ PROMPT() {
     _wait_response ""
 }
 
+WAIT_FOR_INPUT() {
+    echo "[BUTTON_WAIT:ANY]" >&2
+    sleep 0.1
+    local btn=$(_wait_response "A")
+    echo -n "$btn"
+}
+
+WAIT_FOR_BUTTON_PRESS() {
+    local expected="$*"
+    echo "[BUTTON_WAIT:$expected]" >&2
+    sleep 0.1
+    local btn=$(_wait_response "${1:-A}")
+    echo -n "$btn"
+}
+
 export -f LOG LED ALERT ERROR_DIALOG SPINNER SPINNER_STOP START_SPINNER STOP_SPINNER
 export -f CONFIRMATION_DIALOG TEXT_PICKER NUMBER_PICKER IP_PICKER MAC_PICKER PROMPT
+export -f WAIT_FOR_INPUT WAIT_FOR_BUTTON_PRESS
 export -f _nautilus_emit _wait_response
 
 echo "[cyan] [GitHub] Running payload..."
@@ -1771,6 +1807,11 @@ WRAPPER_EOF
                             spinner_id=""
                         fi
                         printf 'event: spinner\ndata: {"action":"stop","id":"%s"}\n\n' "$spinner_id"
+                        continue ;;
+                    "[BUTTON_WAIT:"*)
+                        inner="${line#\[BUTTON_WAIT:}"
+                        expected="${inner%%\]*}"
+                        printf 'event: button_wait\ndata: {"expected":"%s"}\n\n' "$expected"
                         continue ;;
                 esac
                 color=""

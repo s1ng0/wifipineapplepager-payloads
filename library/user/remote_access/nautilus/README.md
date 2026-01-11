@@ -8,7 +8,7 @@
 
 <p align="center">
 <img src="https://img.shields.io/badge/Platform-WiFi%20Pineapple%20Pager-00d4aa?style=flat-square" />
-<img src="https://img.shields.io/badge/Version-1.4.5-blue?style=flat-square" />
+<img src="https://img.shields.io/badge/Version-1.5.1-blue?style=flat-square" />
 <img src="https://img.shields.io/badge/Author-JustSomeTrout-purple?style=flat-square" />
 </p>
 <p align="center">
@@ -50,22 +50,26 @@ No more fumbling with D-pad navigation or manual file transfers. Just point, cli
 <img width="600" height="4" alt="" src="https://github.com/user-attachments/assets/8560a6c9-b1f1-4eed-ac94-bd9e14d36ac5" />
 </p>
 
-## New since 1.4.1
+## New in 1.5.0
 
 | Feature | Description |
 |---------|-------------|
-| **View Source** | View payload.sh content directly in the web UI before running |
-| **Delete Payloads** | Remove local payloads with one click (except Nautilus itself) |
-| **View on GitHub** | Direct link to payload folder on GitHub from MERGED tab |
-| **GitHub URL Validation** | Only allows payloads from `wifipineapplepager-payloads` repositories |
-| **Path Traversal Protection** | Blocks `/../` and URL-encoded variants in GitHub URLs |
-| **Improved Button Layout** | Consistent button sizing across all tabs |
+| **Background Service Mode** | Run Nautilus as a persistent background service that survives payload exit |
+| **Foreground Mode** | Classic mode - payload stays running until you press B to exit |
+| **Service Management** | Re-run payload to stop the service when running in background mode |
+| **Virtual Button Panel** | Web-based D-pad and A/B buttons for payloads using `WAIT_FOR_INPUT` or `WAIT_FOR_BUTTON_PRESS` |
+| **Smart Button Filtering** | Only allowed buttons are clickable - others are dimmed and disabled |
 
 <p align="center">
 <img width="600" height="4" alt="" src="https://github.com/user-attachments/assets/8560a6c9-b1f1-4eed-ac94-bd9e14d36ac5" />
 </p>
 
 ## Features
+
+### Run Modes
+- **Background Service**: Run Nautilus as a persistent service that survives payload exit (select Yes at startup)
+- **Foreground Mode**: Classic mode where payload stays running until you press B to exit (select No at startup)
+- **Service Management**: Re-run the payload to stop the service when running in background mode
 
 ### Core Functionality
 - **Browse All Payloads**: Organized by category with collapsible sections
@@ -77,6 +81,7 @@ No more fumbling with D-pad navigation or manual file transfers. Just point, cli
 - **Stop Control**: Abort running payloads at any time
 - **Delete Payloads**: Remove local payloads directly from the web interface
 - **Shell Terminal**: Full interactive shell access with PTY support
+- **Virtual Button Panel**: D-pad and A/B buttons for payloads using `WAIT_FOR_INPUT`
 
 ### 🌐 GitHub Integration
 
@@ -209,7 +214,9 @@ Nautilus includes multiple layers of protection against web-based attacks:
 │  │  ├── TEXT_PICKER        → Prompt via SSE              │  │
 │  │  ├── NUMBER_PICKER      → Prompt via SSE              │  │
 │  │  ├── IP_PICKER          → Prompt via SSE              │  │
-│  │  └── MAC_PICKER         → Prompt via SSE              │  │
+│  │  ├── MAC_PICKER         → Prompt via SSE              │  │
+│  │  ├── WAIT_FOR_INPUT     → Button panel via SSE        │  │
+│  │  └── WAIT_FOR_BUTTON_PRESS → Button panel via SSE     │  │
 │  └───────────────────────────────────────────────────────┘  │
 │                              │                              │
 │                              ▼                              │
@@ -234,7 +241,7 @@ When you run a payload from the **Merged** or **PRs** tab:
 When you run a payload through Nautilus, it doesn't run directly. Instead:
 
 1. **Wrapper Created**: A temporary script defines wrapper functions for all DuckyScript commands
-2. **Functions Exported**: `LOG`, `LED`, `CONFIRMATION_DIALOG`, etc. are exported to subshells
+2. **Functions Exported**: `LOG`, `LED`, `CONFIRMATION_DIALOG`, `WAIT_FOR_INPUT`, etc. are exported to subshells
 3. **Payload Sourced**: Your payload runs with wrapper functions taking precedence
 4. **Output Captured**: All stdout/stderr streams to `/tmp/nautilus_output.log`
 5. **SSE Polling**: The CGI backend polls the log file every 200ms for new lines
@@ -388,6 +395,16 @@ The spinner overlay includes a kill button (X) to abort the payload if needed.
 | `IP_PICKER "title" "192.168.1.1"` | IP input | IP address |
 | `MAC_PICKER "title" "00:11:22:33:44:55"` | MAC input | MAC address |
 | `PROMPT "message"` | Text input | User's text |
+
+### Button Input Commands (Virtual D-Pad)
+
+| Command | Behavior | Returns |
+|---------|----------|---------|
+| `WAIT_FOR_INPUT` | Shows all buttons, waits for any press | `UP`, `DOWN`, `LEFT`, `RIGHT`, `A`, or `B` |
+| `WAIT_FOR_BUTTON_PRESS UP` | Shows only UP button enabled | `UP` |
+| `WAIT_FOR_BUTTON_PRESS A B` | Shows A and B buttons enabled | `A` or `B` |
+
+The virtual button panel appears at the bottom of the console when a payload requests button input. Only allowed buttons are clickable - others are dimmed and disabled.
 
 ### Passthrough Commands
 
